@@ -1,0 +1,333 @@
+<title>Helmet Comms</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Helmet Comms">
+<meta name="theme-color" content="#101418">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-column visor HUD. Big transmit button on top, preset switch, then tuning sliders. Single dark theme on purpose (worn at night, in a helmet). */
+:root {
+  --bg: #101418;
+  --panel: #182027;
+  --line: #2a3640;
+  --fg: #e6ebee;
+  --dim: #8796a1;
+  --accent: #dfe8f0;      /* swapped per preset */
+  --accent-ink: #101418;
+  --live: #ff5a4a;
+  --display: "Saira Condensed", "Arial Narrow", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+:root[data-preset="helldiver"] { --accent: #f2c230; --accent-ink: #1a1404; }
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  font-family: var(--mono);
+  font-size: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 40px;
+}
+.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+h1 { font-family: var(--display); font-weight: 800; font-size: 30px; letter-spacing: 0.04em; text-transform: uppercase; margin: 0; line-height: 1; }
+.mic { color: var(--dim); font-size: 12px; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+
+.presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.presets button {
+  font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 12px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--dim); cursor: pointer;
+}
+.presets button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+.tx {
+  position: relative; width: 100%; aspect-ratio: 16 / 9; max-width: 100%;
+  border-radius: 10px; border: 2px solid var(--accent); background: var(--panel); color: var(--fg);
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  font-family: var(--display); overflow: hidden;
+}
+.tx .big { font-size: 46px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1; }
+.tx .small { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.tx.on { background: var(--accent); color: var(--accent-ink); }
+.tx.on .small { color: var(--accent-ink); opacity: 0.75; }
+.tx .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+.tx.on .dot { background: var(--accent-ink); }
+.tx.open .dot { background: var(--live); box-shadow: 0 0 0 4px color-mix(in srgb, var(--live) 30%, transparent); }
+
+.meter { height: 10px; border-radius: 5px; background: var(--panel); border: 1px solid var(--line); position: relative; overflow: hidden; }
+.meter .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--accent); transition: width 60ms linear; }
+.meter .thr { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--live); }
+.meter-label { display: flex; justify-content: space-between; color: var(--dim); font-size: 11px; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+.fx { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fx button {
+  font-family: var(--mono); font-size: 13px; padding: 12px 8px; border-radius: 6px; border: 1px solid var(--line);
+  background: transparent; color: var(--fg); cursor: pointer;
+}
+.fx button:active { background: var(--panel); }
+
+section h2 { font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
+.sliders { display: flex; flex-direction: column; gap: 14px; }
+.row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+.row label { font-size: 13px; }
+.row output { font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.row input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+
+.note { color: var(--dim); font-size: 12px; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 14px; }
+.err { color: var(--live); font-size: 13px; line-height: 1.5; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .meter .fill { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Helmet Comms</h1>
+    <div class="mic" id="micLabel">Mic not started</div>
+  </header>
+
+  <div class="presets" role="group" aria-label="Voice preset">
+    <button id="p-trooper" data-p="trooper" aria-pressed="true">Trooper</button>
+    <button id="p-helldiver" data-p="helldiver" aria-pressed="false">Helldiver</button>
+  </div>
+
+  <button class="tx" id="tx" aria-pressed="false">
+    <span class="dot"></span>
+    <span class="big" id="txBig">Start</span>
+    <span class="small" id="txSmall">Tap to open comms</span>
+  </button>
+
+  <div>
+    <div class="meter" aria-hidden="true"><div class="fill" id="meterFill"></div><div class="thr" id="meterThr"></div></div>
+    <div class="meter-label"><span>Voice level</span><span>Red line = gate</span></div>
+  </div>
+
+  <div class="fx">
+    <button id="fxOpen">Radio click</button>
+    <button id="fxCrackle">Comms crackle</button>
+  </div>
+
+  <p class="err" id="err" hidden></p>
+
+  <section>
+    <h2>Tuning</h2>
+    <div class="sliders" id="sliders"></div>
+  </section>
+
+  <p class="note">Keep the speaker pointed away from the helmet to avoid feedback. If it squeals, lower Output or raise the Gate. Settings save on this phone. Your phone's screen needs to stay on while it runs.</p>
+</div>
+
+<script>
+const PRESETS = {
+  trooper:   { input: 1.4, lowcut: 450, highcut: 2800, presence: 7, drive: 0.55, echo: 0.35, hiss: 0.03, sfx: 0.5, gate: -45, output: 0.9 },
+  helldiver: { input: 1.3, lowcut: 380, highcut: 3400, presence: 5, drive: 0.25, echo: 0.0,  hiss: 0.12, sfx: 0.5, gate: -45, output: 0.9 }
+};
+const SLIDERS = [
+  { k: "input",    label: "Mic boost",      min: 0.5, max: 4,    step: 0.1, fmt: v => v.toFixed(1) + "×" },
+  { k: "lowcut",   label: "Low cut",        min: 100, max: 900,  step: 10,  fmt: v => v + " Hz" },
+  { k: "highcut",  label: "High cut",       min: 1800,max: 6000, step: 50,  fmt: v => v + " Hz" },
+  { k: "presence", label: "Presence",       min: 0,   max: 14,   step: 1,   fmt: v => "+" + v + " dB" },
+  { k: "drive",    label: "Distortion",     min: 0,   max: 1,    step: 0.01,fmt: v => Math.round(v * 100) + "%" },
+  { k: "echo",     label: "Helmet echo",    min: 0,   max: 0.8,  step: 0.01,fmt: v => Math.round(v * 100) + "%" },
+  { k: "hiss",     label: "Radio hiss",     min: 0,   max: 0.4,  step: 0.01,fmt: v => Math.round(v * 100) + "%" },
+  { k: "sfx",      label: "Click / static", min: 0,   max: 1,    step: 0.01,fmt: v => Math.round(v * 100) + "%" },
+  { k: "gate",     label: "Gate",           min: -70, max: -20,  step: 1,   fmt: v => v + " dB" },
+  { k: "output",   label: "Output",         min: 0,   max: 2,    step: 0.01,fmt: v => Math.round(v * 100) + "%" }
+];
+
+function load() { try { return JSON.parse(localStorage.getItem("helmetComms")) || null; } catch (e) { return null; } }
+function save() { try { localStorage.setItem("helmetComms", JSON.stringify(state)); } catch (e) {} }
+
+let state = load() || { preset: "trooper", settings: { trooper: { ...PRESETS.trooper }, helldiver: { ...PRESETS.helldiver } } };
+const S = () => state.settings[state.preset];
+
+// ---------- UI ----------
+const slidersEl = document.getElementById("sliders");
+SLIDERS.forEach(d => {
+  const row = document.createElement("div"); row.className = "row";
+  row.innerHTML = `<label for="s-${d.k}">${d.label}</label><output id="o-${d.k}"></output>
+    <input type="range" id="s-${d.k}" min="${d.min}" max="${d.max}" step="${d.step}">`;
+  slidersEl.appendChild(row);
+  row.querySelector("input").addEventListener("input", e => {
+    S()[d.k] = parseFloat(e.target.value); syncLabels(); applyParams(); save();
+  });
+});
+function syncSliders() {
+  SLIDERS.forEach(d => { document.getElementById("s-" + d.k).value = S()[d.k]; });
+  syncLabels();
+}
+function syncLabels() {
+  SLIDERS.forEach(d => { document.getElementById("o-" + d.k).textContent = d.fmt(S()[d.k]); });
+  document.getElementById("meterThr").style.left = dbToPct(S().gate) + "%";
+}
+function setPreset(p) {
+  state.preset = p; save();
+  document.documentElement.dataset.preset = p;
+  document.querySelectorAll(".presets button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === p));
+  syncSliders(); applyParams();
+}
+document.querySelectorAll(".presets button").forEach(b => b.addEventListener("click", () => setPreset(b.dataset.p)));
+const dbToPct = db => Math.max(0, Math.min(100, (db + 70) / 60 * 100));
+
+// ---------- Audio ----------
+let ctx, stream, src, nodes = {}, noiseBuf, running = false, gateOpen = false, lastLoud = 0, raf, wakeLock;
+
+function curve(amount) {
+  const k = amount * 60 + 1, n = 2048, c = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const x = i * 2 / n - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); }
+  return c;
+}
+function makeNoise() {
+  const b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return b;
+}
+
+async function start() {
+  const err = document.getElementById("err"); err.hidden = true;
+  try {
+    ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "interactive" });
+    await ctx.resume();
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false } });
+  } catch (e) {
+    err.textContent = "Couldn't open the microphone. Allow mic access for this site in Safari (aA menu → Website Settings), then tap Start again.";
+    err.hidden = false; if (ctx) ctx.close(); return;
+  }
+  const track = stream.getAudioTracks()[0];
+  document.getElementById("micLabel").textContent = "Mic: " + (track.label || "default");
+  noiseBuf = makeNoise();
+
+  src = ctx.createMediaStreamSource(stream);
+  const n = nodes;
+  n.input = ctx.createGain();
+  n.hp = ctx.createBiquadFilter(); n.hp.type = "highpass"; n.hp.Q.value = 0.9;
+  n.hp2 = ctx.createBiquadFilter(); n.hp2.type = "highpass"; n.hp2.Q.value = 0.7;
+  n.lp = ctx.createBiquadFilter(); n.lp.type = "lowpass"; n.lp.Q.value = 0.9;
+  n.lp2 = ctx.createBiquadFilter(); n.lp2.type = "lowpass"; n.lp2.Q.value = 0.7;
+  n.pres = ctx.createBiquadFilter(); n.pres.type = "peaking"; n.pres.Q.value = 1.2;
+  n.shaper = ctx.createWaveShaper(); n.shaper.oversample = "2x";
+  n.comp = ctx.createDynamicsCompressor();
+  n.comp.threshold.value = -28; n.comp.ratio.value = 10; n.comp.attack.value = 0.003; n.comp.release.value = 0.12; n.comp.knee.value = 6;
+  n.delay = ctx.createDelay(0.1); n.delay.delayTime.value = 0.009;
+  n.fb = ctx.createGain(); n.echoMix = ctx.createGain();
+  n.analyser = ctx.createAnalyser(); n.analyser.fftSize = 1024;
+  n.gate = ctx.createGain(); n.gate.gain.value = 0;
+  n.out = ctx.createGain();
+
+  // hiss bed (only audible while gate is open)
+  n.hissSrc = ctx.createBufferSource(); n.hissSrc.buffer = noiseBuf; n.hissSrc.loop = true;
+  n.hissBp = ctx.createBiquadFilter(); n.hissBp.type = "bandpass"; n.hissBp.frequency.value = 2500; n.hissBp.Q.value = 0.6;
+  n.hiss = ctx.createGain();
+  n.hissSrc.connect(n.hissBp).connect(n.hiss).connect(n.gate); n.hissSrc.start();
+
+  src.connect(n.input).connect(n.hp).connect(n.hp2).connect(n.lp).connect(n.lp2).connect(n.pres).connect(n.shaper).connect(n.comp);
+  n.input.connect(n.analyser);
+  n.comp.connect(n.gate);
+  n.comp.connect(n.delay); n.delay.connect(n.fb).connect(n.delay); n.delay.connect(n.echoMix).connect(n.gate);
+  n.gate.connect(n.out).connect(ctx.destination);
+
+  applyParams();
+  running = true; gateOpen = false;
+  try { wakeLock = await navigator.wakeLock?.request("screen"); } catch (e) {}
+  setTx(); loop();
+  sfxOpen();
+}
+
+function stop() {
+  running = false; cancelAnimationFrame(raf);
+  try { wakeLock?.release(); } catch (e) {}
+  stream?.getTracks().forEach(t => t.stop());
+  ctx?.close(); ctx = null; nodes = {};
+  document.getElementById("meterFill").style.width = "0";
+  setTx();
+}
+
+function applyParams() {
+  if (!ctx || !nodes.input) return;
+  const s = S(), t = ctx.currentTime, n = nodes;
+  n.input.gain.setTargetAtTime(s.input, t, 0.02);
+  n.hp.frequency.setTargetAtTime(s.lowcut, t, 0.02); n.hp2.frequency.setTargetAtTime(s.lowcut, t, 0.02);
+  n.lp.frequency.setTargetAtTime(s.highcut, t, 0.02); n.lp2.frequency.setTargetAtTime(s.highcut, t, 0.02);
+  n.pres.frequency.setTargetAtTime(state.preset === "trooper" ? 1700 : 2400, t, 0.02);
+  n.pres.gain.setTargetAtTime(s.presence, t, 0.02);
+  n.shaper.curve = curve(s.drive);
+  n.fb.gain.setTargetAtTime(s.echo * 0.7, t, 0.02);
+  n.echoMix.gain.setTargetAtTime(s.echo, t, 0.02);
+  n.delay.delayTime.setTargetAtTime(state.preset === "trooper" ? 0.009 : 0.004, t, 0.02);
+  n.hiss.gain.setTargetAtTime(s.hiss * 0.25, t, 0.02);
+  n.out.gain.setTargetAtTime(s.output, t, 0.02);
+}
+
+const buf = new Float32Array(1024);
+function loop() {
+  if (!running) return;
+  nodes.analyser.getFloatTimeDomainData(buf);
+  let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+  const db = 20 * Math.log10(Math.sqrt(sum / buf.length) + 1e-9);
+  document.getElementById("meterFill").style.width = dbToPct(db) + "%";
+  const now = performance.now(), t = ctx.currentTime;
+  if (db > S().gate) {
+    lastLoud = now;
+    if (!gateOpen) { gateOpen = true; sfxOpen(); nodes.gate.gain.setTargetAtTime(1, t, 0.005); setTx(); }
+  } else if (gateOpen && now - lastLoud > 320) {
+    gateOpen = false; nodes.gate.gain.setTargetAtTime(0, t, 0.03); sfxClose(); setTx();
+  }
+  raf = requestAnimationFrame(loop);
+}
+
+// ---------- Sound effects ----------
+function noiseBurst(dur, freq, q, vol, when = 0) {
+  if (!ctx) return;
+  const t = ctx.currentTime + when;
+  const s = ctx.createBufferSource(); s.buffer = noiseBuf;
+  const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = freq; f.Q.value = q;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f).connect(g).connect(nodes.out);
+  s.start(t, Math.random()); s.stop(t + dur + 0.02);
+}
+function tone(freq, dur, vol, when = 0, type = "square") {
+  if (!ctx) return;
+  const t = ctx.currentTime + when;
+  const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.004);
+  g.gain.setValueAtTime(vol, t + dur - 0.01); g.gain.linearRampToValueAtTime(0, t + dur);
+  o.connect(g).connect(nodes.out); o.start(t); o.stop(t + dur + 0.02);
+}
+function sfxOpen() {
+  const v = S().sfx; if (!v) return;
+  if (state.preset === "trooper") { noiseBurst(0.025, 3000, 1.5, v * 0.9); tone(1900, 0.03, v * 0.12, 0); }
+  else { tone(1250, 0.06, v * 0.12, 0); tone(1650, 0.07, v * 0.12, 0.07); }
+}
+function sfxClose() {
+  const v = S().sfx; if (!v) return;
+  if (state.preset === "trooper") { noiseBurst(0.28, 2200, 0.5, v * 0.7); noiseBurst(0.02, 3200, 1.5, v * 0.8, 0.27); }
+  else { noiseBurst(0.12, 2600, 0.7, v * 0.5); tone(1650, 0.05, v * 0.1, 0.12); tone(1250, 0.06, v * 0.1, 0.18); }
+}
+function crackle() {
+  const v = Math.max(S().sfx, 0.3);
+  for (let i = 0; i < 9; i++) noiseBurst(0.03 + Math.random() * 0.08, 1500 + Math.random() * 2500, 0.8, v * (0.3 + Math.random() * 0.6), i * 0.07 + Math.random() * 0.04);
+}
+
+// ---------- Controls ----------
+function setTx() {
+  const b = document.getElementById("tx");
+  b.classList.toggle("on", running); b.classList.toggle("open", running && gateOpen);
+  b.setAttribute("aria-pressed", running);
+  document.getElementById("txBig").textContent = running ? (gateOpen ? "Transmitting" : "Listening") : "Start";
+  document.getElementById("txSmall").textContent = running ? "Tap to stop" : "Tap to open comms";
+}
+document.getElementById("tx").addEventListener("click", () => running ? stop() : start());
+document.getElementById("fxOpen").addEventListener("click", () => { if (running) { sfxOpen(); setTimeout(sfxClose, 500); } });
+document.getElementById("fxCrackle").addEventListener("click", () => { if (running) crackle(); });
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState === "visible" && running) {
+    ctx?.resume();
+    try { wakeLock = await navigator.wakeLock?.request("screen"); } catch (e) {}
+  }
+});
+
+setPreset(state.preset);
+setTx();
+</script>
