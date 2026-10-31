@@ -87,6 +87,9 @@ section h2 { font-family: var(--display); font-weight: 700; font-size: 24px; let
 .row input[type=range]::-moz-range-progress { height: 14px; border-radius: 7px; background: var(--accent); }
 .row input[type=range]::-moz-range-thumb { width: 32px; height: 32px; border-radius: 50%; background: var(--fg); border: 4px solid var(--accent); }
 
+.micpick { display: flex; flex-direction: column; gap: 8px; }
+.micpick span { font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.micpick select { font-family: var(--mono); font-size: 18px; padding: 16px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); width: 100%; }
 .note { color: var(--dim); font-size: 15px; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 16px; }
 .err { color: var(--live); font-size: 16px; line-height: 1.5; }
 
@@ -123,6 +126,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
     <button id="fxCrackle">Comms crackle</button>
     <button id="blackoutBtn" class="wide">Blackout screen</button>
   </div>
+
+  <label class="micpick" id="micPick" hidden>
+    <span>Microphone</span>
+    <select id="micSel"></select>
+  </label>
 
   <p class="err" id="err" hidden></p>
 
@@ -213,13 +221,17 @@ async function start() {
   try {
     ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "interactive" });
     await ctx.resume();
-    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true, autoGainControl: false } });
+    const audio = { echoCancellation: false, noiseSuppression: true, autoGainControl: false };
+    if (state.micId) audio.deviceId = { exact: state.micId };
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio }); }
+    catch (e) { delete audio.deviceId; state.micId = null; stream = await navigator.mediaDevices.getUserMedia({ audio }); }
   } catch (e) {
     err.textContent = "Couldn't open the microphone. Allow mic access for this site in Safari (aA menu → Website Settings), then tap Start again.";
     err.hidden = false; if (ctx) ctx.close(); return;
   }
   const track = stream.getAudioTracks()[0];
   document.getElementById("micLabel").textContent = "Mic: " + (track.label || "default");
+  listMics(track.getSettings().deviceId);
   noiseBuf = makeNoise();
 
   src = ctx.createMediaStreamSource(stream);
@@ -258,6 +270,25 @@ async function start() {
   setTx(); loop();
   sfxOpen();
 }
+
+async function listMics(currentId) {
+  try {
+    const mics = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "audioinput");
+    const sel = document.getElementById("micSel");
+    sel.innerHTML = "";
+    mics.forEach((m, i) => {
+      const o = document.createElement("option");
+      o.value = m.deviceId; o.textContent = m.label || ("Microphone " + (i + 1));
+      if (m.deviceId === currentId) o.selected = true;
+      sel.appendChild(o);
+    });
+    document.getElementById("micPick").hidden = mics.length < 2;
+  } catch (e) {}
+}
+document.getElementById("micSel").addEventListener("change", async e => {
+  state.micId = e.target.value; save();
+  if (running) { stop(); await start(); }
+});
 
 function stop() {
   running = false; cancelAnimationFrame(raf);
