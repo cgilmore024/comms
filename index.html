@@ -24,20 +24,20 @@
 html, body { background: var(--bg); color: var(--fg); }
 body {
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 17px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 16px 40px;
 }
-.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
 header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-h1 { font-family: var(--display); font-weight: 800; font-size: 30px; letter-spacing: 0.04em; text-transform: uppercase; margin: 0; line-height: 1; }
-.mic { color: var(--dim); font-size: 12px; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+h1 { font-family: var(--display); font-weight: 800; font-size: 38px; letter-spacing: 0.04em; text-transform: uppercase; margin: 0; line-height: 1; }
+.mic { color: var(--dim); font-size: 14px; text-align: right; min-width: 0; overflow-wrap: anywhere; }
 
-.presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.presets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .presets button {
-  font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 12px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--dim); cursor: pointer;
+  font-family: var(--display); font-weight: 700; font-size: 28px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 18px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--dim); cursor: pointer;
 }
 .presets button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 
@@ -47,35 +47,51 @@ h1 { font-family: var(--display); font-weight: 800; font-size: 30px; letter-spac
   cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   font-family: var(--display); overflow: hidden;
 }
-.tx .big { font-size: 46px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1; }
-.tx .small { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.tx { aspect-ratio: 4 / 3; }
+.tx .big { font-size: clamp(48px, 15vw, 72px); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1; }
+.tx .small { font-family: var(--mono); font-size: 16px; color: var(--dim); }
+.tx .dot { width: 18px !important; height: 18px !important; }
 .tx.on { background: var(--accent); color: var(--accent-ink); }
 .tx.on .small { color: var(--accent-ink); opacity: 0.75; }
 .tx .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
 .tx.on .dot { background: var(--accent-ink); }
 .tx.open .dot { background: var(--live); box-shadow: 0 0 0 4px color-mix(in srgb, var(--live) 30%, transparent); }
 
-.meter { height: 10px; border-radius: 5px; background: var(--panel); border: 1px solid var(--line); position: relative; overflow: hidden; }
+.meter { height: 18px; border-radius: 9px; background: var(--panel); border: 1px solid var(--line); position: relative; overflow: hidden; }
 .meter .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--accent); transition: width 60ms linear; }
 .meter .thr { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--live); }
-.meter-label { display: flex; justify-content: space-between; color: var(--dim); font-size: 11px; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+.meter-label { display: flex; justify-content: space-between; color: var(--dim); font-size: 13px; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
 
-.fx { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fx { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .fx button {
-  font-family: var(--mono); font-size: 13px; padding: 12px 8px; border-radius: 6px; border: 1px solid var(--line);
+  font-family: var(--mono); font-size: 18px; padding: 20px 8px; border-radius: 8px; border: 1px solid var(--line);
   background: transparent; color: var(--fg); cursor: pointer;
 }
 .fx button:active { background: var(--panel); }
+.fx .wide { grid-column: 1 / -1; background: var(--panel); font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: 0.08em; text-transform: uppercase; }
 
-section h2 { font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
-.sliders { display: flex; flex-direction: column; gap: 14px; }
-.row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
-.row label { font-size: 13px; }
-.row output { font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
-.row input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.sec-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 16px; }
+section h2 { font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin: 0; }
+.reset { font-family: var(--mono); font-size: 16px; padding: 12px 18px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; }
+.reset:active { background: var(--panel); }
+.sliders { display: flex; flex-direction: column; gap: 26px; }
+.row { display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; align-items: center; }
+.row label { font-size: 19px; }
+.row output { font-size: 17px; color: var(--accent); font-variant-numeric: tabular-nums; }
 
-.note { color: var(--dim); font-size: 12px; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 14px; }
-.err { color: var(--live); font-size: 13px; line-height: 1.5; }
+/* big touch-friendly sliders */
+.row input[type=range] { grid-column: 1 / -1; width: 100%; height: 44px; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; touch-action: pan-y; }
+.row input[type=range]::-webkit-slider-runnable-track { height: 14px; border-radius: 7px; background: linear-gradient(to right, var(--accent) var(--pct, 50%), var(--line) var(--pct, 50%)); }
+.row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 40px; height: 40px; border-radius: 50%; background: var(--fg); border: 4px solid var(--accent); margin-top: -13px; }
+.row input[type=range]::-moz-range-track { height: 14px; border-radius: 7px; background: var(--line); }
+.row input[type=range]::-moz-range-progress { height: 14px; border-radius: 7px; background: var(--accent); }
+.row input[type=range]::-moz-range-thumb { width: 32px; height: 32px; border-radius: 50%; background: var(--fg); border: 4px solid var(--accent); }
+
+.note { color: var(--dim); font-size: 15px; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 16px; }
+.err { color: var(--live); font-size: 16px; line-height: 1.5; }
+
+.blackout { position: fixed; inset: 0; z-index: 50; background: #000; display: flex; align-items: flex-end; justify-content: center; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); touch-action: none; user-select: none; -webkit-user-select: none; }
+.blackout span { color: #1c1c1c; font-size: 14px; font-family: var(--mono); }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .meter .fill { transition: none; } }
 </style>
@@ -103,24 +119,30 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
   </div>
 
   <div class="fx">
-    <button id="fxOpen">Radio click</button>
+    <button id="fxOpen">Test click</button>
     <button id="fxCrackle">Comms crackle</button>
+    <button id="blackoutBtn" class="wide">Blackout screen</button>
   </div>
 
   <p class="err" id="err" hidden></p>
 
   <section>
-    <h2>Tuning</h2>
+    <div class="sec-head">
+      <h2>Tuning</h2>
+      <button class="reset" id="resetBtn">Reset to default</button>
+    </div>
     <div class="sliders" id="sliders"></div>
   </section>
 
-  <p class="note">Keep the speaker pointed away from the helmet to avoid feedback. If it squeals, lower Output or raise the Gate. Settings save on this phone. Your phone's screen needs to stay on while it runs.</p>
+  <p class="note">Keep the speaker pointed away from the helmet to avoid feedback. If it squeals, lower Output or raise the Gate. Settings save on this phone. Safari stops the mic when the screen locks, so use Blackout instead: the screen goes black but comms keep running. Press and hold anywhere to exit.</p>
 </div>
+
+<div class="blackout" id="blackout" hidden><span>Hold to exit</span></div>
 
 <script>
 const PRESETS = {
-  trooper:   { input: 1.4, lowcut: 450, highcut: 2800, presence: 7, drive: 0.55, echo: 0.35, hiss: 0.03, sfx: 0.5, gate: -45, output: 0.9 },
-  helldiver: { input: 1.3, lowcut: 380, highcut: 3400, presence: 5, drive: 0.25, echo: 0.0,  hiss: 0.12, sfx: 0.5, gate: -45, output: 0.9 }
+  trooper:   { input: 1.4, lowcut: 450, highcut: 2800, presence: 7, drive: 0.55, echo: 0.35, hiss: 0.03, sfx: 0.35, gate: -45, output: 0.9 },
+  helldiver: { input: 1.4, lowcut: 400, highcut: 2900, presence: 5, drive: 0.3,  echo: 0.0,  hiss: 0.04, sfx: 0.35, gate: -45, output: 0.9 }
 };
 const SLIDERS = [
   { k: "input",    label: "Mic boost",      min: 0.5, max: 4,    step: 0.1, fmt: v => v.toFixed(1) + "×" },
@@ -157,7 +179,10 @@ function syncSliders() {
   syncLabels();
 }
 function syncLabels() {
-  SLIDERS.forEach(d => { document.getElementById("o-" + d.k).textContent = d.fmt(S()[d.k]); });
+  SLIDERS.forEach(d => {
+    document.getElementById("o-" + d.k).textContent = d.fmt(S()[d.k]);
+    document.getElementById("s-" + d.k).style.setProperty("--pct", ((S()[d.k] - d.min) / (d.max - d.min) * 100) + "%");
+  });
   document.getElementById("meterThr").style.left = dbToPct(S().gate) + "%";
 }
 function setPreset(p) {
@@ -205,6 +230,7 @@ async function start() {
   n.lp = ctx.createBiquadFilter(); n.lp.type = "lowpass"; n.lp.Q.value = 0.9;
   n.lp2 = ctx.createBiquadFilter(); n.lp2.type = "lowpass"; n.lp2.Q.value = 0.7;
   n.pres = ctx.createBiquadFilter(); n.pres.type = "peaking"; n.pres.Q.value = 1.2;
+  n.scoop = ctx.createBiquadFilter(); n.scoop.type = "peaking"; n.scoop.frequency.value = 1000; n.scoop.Q.value = 2;
   n.shaper = ctx.createWaveShaper(); n.shaper.oversample = "2x";
   n.comp = ctx.createDynamicsCompressor();
   n.comp.threshold.value = -28; n.comp.ratio.value = 10; n.comp.attack.value = 0.003; n.comp.release.value = 0.12; n.comp.knee.value = 6;
@@ -220,7 +246,7 @@ async function start() {
   n.hiss = ctx.createGain();
   n.hissSrc.connect(n.hissBp).connect(n.hiss).connect(n.gate); n.hissSrc.start();
 
-  src.connect(n.input).connect(n.hp).connect(n.hp2).connect(n.lp).connect(n.lp2).connect(n.pres).connect(n.shaper).connect(n.comp);
+  src.connect(n.input).connect(n.hp).connect(n.hp2).connect(n.lp).connect(n.lp2).connect(n.pres).connect(n.scoop).connect(n.shaper).connect(n.comp);
   n.input.connect(n.analyser);
   n.comp.connect(n.gate);
   n.comp.connect(n.delay); n.delay.connect(n.fb).connect(n.delay); n.delay.connect(n.echoMix).connect(n.gate);
@@ -248,7 +274,11 @@ function applyParams() {
   n.input.gain.setTargetAtTime(s.input, t, 0.02);
   n.hp.frequency.setTargetAtTime(s.lowcut, t, 0.02); n.hp2.frequency.setTargetAtTime(s.lowcut, t, 0.02);
   n.lp.frequency.setTargetAtTime(s.highcut, t, 0.02); n.lp2.frequency.setTargetAtTime(s.highcut, t, 0.02);
-  n.pres.frequency.setTargetAtTime(state.preset === "trooper" ? 1700 : 2400, t, 0.02);
+  const hd = state.preset === "helldiver";
+  n.pres.frequency.setTargetAtTime(hd ? 1800 : 1700, t, 0.02);
+  n.scoop.gain.setTargetAtTime(hd ? -4 : 0, t, 0.02);
+  n.comp.ratio.setTargetAtTime(hd ? 5 : 10, t, 0.02);
+  n.comp.threshold.setTargetAtTime(hd ? -24 : -28, t, 0.02);
   n.pres.gain.setTargetAtTime(s.presence, t, 0.02);
   n.shaper.curve = curve(s.drive);
   n.fb.gain.setTargetAtTime(s.echo * 0.7, t, 0.02);
@@ -295,15 +325,17 @@ function tone(freq, dur, vol, when = 0, type = "square") {
   g.gain.setValueAtTime(vol, t + dur - 0.01); g.gain.linearRampToValueAtTime(0, t + dur);
   o.connect(g).connect(nodes.out); o.start(t); o.stop(t + dur + 0.02);
 }
+// Walkie-talkie style: short static clicks only, no tones.
 function sfxOpen() {
   const v = S().sfx; if (!v) return;
-  if (state.preset === "trooper") { noiseBurst(0.025, 3000, 1.5, v * 0.9); tone(1900, 0.03, v * 0.12, 0); }
-  else { tone(1250, 0.06, v * 0.12, 0); tone(1650, 0.07, v * 0.12, 0.07); }
+  noiseBurst(0.012, 2800, 1.2, v * 0.8);          // key-up click
+  noiseBurst(0.05, 2200, 0.6, v * 0.25, 0.008);   // tiny static tail
 }
 function sfxClose() {
   const v = S().sfx; if (!v) return;
-  if (state.preset === "trooper") { noiseBurst(0.28, 2200, 0.5, v * 0.7); noiseBurst(0.02, 3200, 1.5, v * 0.8, 0.27); }
-  else { noiseBurst(0.12, 2600, 0.7, v * 0.5); tone(1650, 0.05, v * 0.1, 0.12); tone(1250, 0.06, v * 0.1, 0.18); }
+  const len = state.preset === "trooper" ? 0.16 : 0.1;
+  noiseBurst(len, 2400, 0.5, v * 0.35);           // short squelch
+  noiseBurst(0.012, 3000, 1.2, v * 0.7, len - 0.01); // release click
 }
 function crackle() {
   const v = Math.max(S().sfx, 0.3);
@@ -321,6 +353,24 @@ function setTx() {
 document.getElementById("tx").addEventListener("click", () => running ? stop() : start());
 document.getElementById("fxOpen").addEventListener("click", () => { if (running) { sfxOpen(); setTimeout(sfxClose, 500); } });
 document.getElementById("fxCrackle").addEventListener("click", () => { if (running) crackle(); });
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  state.settings[state.preset] = { ...PRESETS[state.preset] };
+  save(); syncSliders(); applyParams();
+  const b = document.getElementById("resetBtn"); b.textContent = "Reset ✓";
+  setTimeout(() => { b.textContent = "Reset to default"; }, 1200);
+});
+
+// Blackout: black screen, comms keep running, press-and-hold to exit
+const blackout = document.getElementById("blackout");
+let holdTimer;
+document.getElementById("blackoutBtn").addEventListener("click", async () => {
+  blackout.hidden = false;
+  try { if (!wakeLock || wakeLock.released) wakeLock = await navigator.wakeLock?.request("screen"); } catch (e) {}
+});
+blackout.addEventListener("pointerdown", () => { holdTimer = setTimeout(() => { blackout.hidden = true; }, 900); });
+["pointerup", "pointercancel", "pointerleave"].forEach(ev => blackout.addEventListener(ev, () => clearTimeout(holdTimer)));
+blackout.addEventListener("contextmenu", e => e.preventDefault());
 document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState === "visible" && running) {
     ctx?.resume();
